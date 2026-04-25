@@ -1,0 +1,39 @@
+{
+  "name": "logarys-console-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Logarys console API responsible for UI queries, query adapters, reports, configuration and maintenance operations.",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "start:dev": "node --watch --loader ts-node/esm src/main.ts",
+    "dev:up": "docker compose up -d --build",
+    "dev:down": "docker compose down",
+    "lint": "tsc -p tsconfig.build.json --noEmit",
+    "test:all": "npm run dev:up && npm run test:unit && npm run test:functional && npm run dev:down",
+    "test:unit": "npm run build && node --test test/*.spec.mjs",
+    "test:functional": "node --test test/functional/*.functional-spec.mjs"
+  },
+  "dependencies": {
+    "@logarys/query-adapter-contracts": "^0.1.0",
+    "@logarys/rsql-mongodb-adapter": "^0.1.0",
+    "@nestjs/common": "11.1.*",
+    "@nestjs/config": "4.0.*",
+    "@nestjs/core": "11.1.*",
+    "@nestjs/platform-express": "11.1.*",
+    "mongodb": "6.12.*",
+    "nats": "2.29.*",
+    "reflect-metadata": "0.2.*",
+    "rxjs": "7.8.*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
