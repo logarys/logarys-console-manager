@@ -30,11 +30,11 @@ services:
     networks:
       - logarys
 
-  console-manager:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: logarys/console-manager:dev
+    image: logarys/console-manager:latest
     container_name: logarys-console-manager
     restart: unless-stopped
     depends_on:

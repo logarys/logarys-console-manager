@@ -13,6 +13,7 @@ help() {
   echo ""
   echo "Options:"
   echo "  --version    Release type: patch, minor, major"
+  echo "  --republish  Release current version again"
   echo "  -v           Show command output"
   echo "  -h, --help   Show help"
 }
@@ -43,11 +44,16 @@ run() {
   success "Done"
 }
 
+NEW=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --version)
       RELEASE_TYPE="$2"
       shift 2
+      ;;
+    --republish)
+      NEW=0
+      shift
       ;;
     -v|--verbose)
       VERBOSE=true
@@ -65,7 +71,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$RELEASE_TYPE" != "patch" && "$RELEASE_TYPE" != "minor" && "$RELEASE_TYPE" != "major" ]]; then
+if [[ "$NEW" == "1" && "$RELEASE_TYPE" != "patch" && "$RELEASE_TYPE" != "minor" && "$RELEASE_TYPE" != "major" ]]; then
   error "You must specify a release type: patch, minor or major"
   help
   exit 1
@@ -73,7 +79,10 @@ fi
 
 log "Starting $RELEASE_TYPE release"
 
-npm version $RELEASE_TYPE --no-git-tag-version
+if [ "$NEW" == "1" ]
+then
+  npm version $RELEASE_TYPE --no-git-tag-version
+fi
 VERSION="$(node -p "require('./package.json').version")"
 
 log "Build docker image"
