@@ -365,3 +365,43 @@ Recommended production safeguards:
 ## License
 
 MIT
+
+## UI compatible routes
+
+The console manager exposes UI-friendly aliases for pipelines and logs:
+
+```http
+GET  /pipelines
+POST /pipelines
+GET  /pipelines/:id
+GET  /logs
+POST /logs/search
+```
+
+The historical config routes remain available:
+
+```http
+GET  /configs/pipelines
+POST /configs/pipelines
+GET  /configs/pipelines/:id
+```
+
+Pipeline search accepts `query`, `q`, `name`, `inputType`, `enabled`, `limit`, and `skip`.
+
+Log search accepts `filter` for RSQL, plus UI parameters `query`, `q`, `search`, `pipelineId`, `level`, `limit`, and `skip`.
+
+## Local test data endpoint
+
+For local development only, you can enable a gated test data endpoint:
+
+```env
+LOGARYS_ENABLE_TEST_DATA_ENDPOINTS=true
+```
+
+Then load one pipeline and synthetic logs through the console-manager API:
+
+```bash
+LOGARYS_CONSOLE_API_URL=http://localhost:3002 npm run test:data
+```
+
+The endpoint is disabled by default and should not be enabled in production.

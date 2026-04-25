@@ -3,7 +3,10 @@ import { Filter, Sort } from "mongodb";
 import { MongoService } from "../mongo/mongo.service.js";
 import { QueryService } from "../query/query.service.js";
 import { LogDocument } from "./log-document.js";
-import { ObjectId } from "mongodb";
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 @Injectable()
 export class LogsService {
@@ -14,6 +17,9 @@ export class LogsService {
 
   async search(params: {
     query?: string;
+    text?: string;
+    pipelineId?: string;
+    level?: string;
     language?: string;
     limit: number;
     skip: number;
@@ -24,8 +30,31 @@ export class LogsService {
       ? this.queryService.convert(params.language ?? "rsql", "mongodb", params.query)
       : { filter: {} };
 
+    const filter: Filter<LogDocument> = { ...(converted.filter as Filter<LogDocument>) };
+
+    if (params.pipelineId) {
+      filter.pipelineId = params.pipelineId;
+    }
+
+    if (params.level) {
+      filter.level = params.level;
+    }
+
+    if (params.text) {
+      const regex = new RegExp(escapeRegex(params.text), "i");
+      filter.$or = [
+        { message: regex },
+        { normalizedMessage: regex },
+        { source: regex },
+        { service: regex },
+        { host: regex },
+        { errorType: regex },
+        { errorCode: regex },
+      ];
+    }
+
     return collection
-      .find(converted.filter as Filter<LogDocument>)
+      .find(filter)
       .sort(params.sort ?? { timestamp: -1 })
       .skip(params.skip)
       .limit(params.limit)

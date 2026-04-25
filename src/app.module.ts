@@ -8,6 +8,7 @@ import { ConfigManagementModule } from "./config/config-management.module.js";
 import { MaintenanceModule } from "./maintenance/maintenance.module.js";
 import { MongoModule } from "./mongo/mongo.module.js";
 import { NatsModule } from "./nats/nats.module.js";
+import { TestDataModule } from "./test-data/test-data.module.js";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { NatsModule } from "./nats/nats.module.js";
     ReportsModule,
     ConfigManagementModule,
     MaintenanceModule,
+    TestDataModule,
   ],
 })
 export class AppModule {}

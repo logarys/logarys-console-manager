@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 
 export interface LogDocument {
+  pipelineId?: string;
   _id?: ObjectId;
   timestamp: Date;
   level: string;

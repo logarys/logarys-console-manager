@@ -7,5 +7,6 @@ import { ConfigManagementService } from "./config-management.service.js";
   imports: [MongoModule],
   controllers: [ConfigManagementController],
   providers: [ConfigManagementService],
+  exports: [ConfigManagementService],
 })
 export class ConfigManagementModule {}
