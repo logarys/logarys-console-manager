@@ -2,6 +2,50 @@ import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { parsePositiveInteger } from "../common/http-error.js";
 import { LogsService } from "./logs.service.js";
 
+function looksLikeRsql(value?: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  return [
+    "==",
+    "!=",
+    ">=",
+    "<=",
+    "=gt=",
+    "=ge=",
+    "=lt=",
+    "=le=",
+    "=in=",
+    "=out=",
+    "=contains=",
+    "=starts=",
+    "=ends=",
+    "=exists=",
+    "=regex=",
+  ].some((operator) => value.includes(operator));
+}
+
+function resolveSearchInputs(filter?: string, query?: string, q?: string, search?: string): { filter?: string; text?: string } {
+  if (filter) {
+    return {
+      filter,
+      text: query ?? q ?? search,
+    };
+  }
+
+  if (looksLikeRsql(query)) {
+    return {
+      filter: query,
+      text: q ?? search,
+    };
+  }
+
+  return {
+    text: query ?? q ?? search,
+  };
+}
+
 @Controller()
 export class LogsController {
   constructor(private readonly logsService: LogsService) {}
@@ -20,9 +64,10 @@ export class LogsController {
   ) {
     const limit = parsePositiveInteger(limitValue, 100, 1000);
     const skip = skipValue === undefined ? 0 : Number(skipValue);
+    const resolved = resolveSearchInputs(filter, query, q, search);
     const logs = await this.logsService.search({
-      query: filter,
-      text: query ?? q ?? search,
+      query: resolved.filter,
+      text: resolved.text,
       pipelineId,
       level,
       language,
@@ -51,9 +96,10 @@ export class LogsController {
     @Body("limit") limitValue?: number,
     @Body("skip") skipValue?: number,
   ) {
+    const resolved = resolveSearchInputs(filter, query, q, search);
     const logs = await this.logsService.search({
-      query: filter,
-      text: query ?? q ?? search,
+      query: resolved.filter,
+      text: resolved.text,
       pipelineId,
       level,
       language,

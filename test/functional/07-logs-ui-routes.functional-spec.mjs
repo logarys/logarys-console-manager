@@ -47,3 +47,28 @@ test("/api/logs/search alias should return the UI log search shape", async () =>
 
   assertLogSearchResponse(response);
 });
+
+test("GET /logs should accept RSQL through query alias", async () => {
+  const response = await get("/logs?query=message%3D%3D%2A099%2A&limit=100");
+
+  assertLogSearchResponse(response);
+  assert.equal(
+    response.body.items.every((log) => String(log.message ?? "").includes("099")),
+    true,
+    JSON.stringify(response.body.items.map((log) => log.message)),
+  );
+});
+
+test("POST /logs/search should accept RSQL through query alias", async () => {
+  const response = await post("/logs/search", {
+    query: "message==*099*",
+    limit: 100,
+  });
+
+  assertLogSearchResponse(response);
+  assert.equal(
+    response.body.items.every((log) => String(log.message ?? "").includes("099")),
+    true,
+    JSON.stringify(response.body.items.map((log) => log.message)),
+  );
+});
