@@ -95,8 +95,6 @@ run "docker push logarys/console-manager:latest"
 
 success "New version: $VERSION"
 
-run "version=$VERSION docker compose build app"
-run "version=$VERSION docker compose push"
 
 git tag "$VERSION"
 git add --all

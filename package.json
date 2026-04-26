@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@logarys/query-adapter-contracts": "^0.1.0",
-    "@logarys/rsql-mongodb-adapter": "^0.1.*",
+    "@logarys/rsql-mongodb-adapter": "^0.2.*",
     "@nestjs/common": "11.1.*",
     "@nestjs/config": "4.0.*",
     "@nestjs/core": "11.1.*",
