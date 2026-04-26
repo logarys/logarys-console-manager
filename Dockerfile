@@ -35,6 +35,7 @@ RUN npm ci --omit=dev \
   && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/README.md ./README.md
 COPY --from=build /app/CONTRIBUTE.md ./CONTRIBUTE.md
 COPY --from=build /app/LICENSE ./LICENSE

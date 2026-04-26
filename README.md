@@ -511,3 +511,34 @@ Example response:
   }
 }
 ```
+
+## User commands inside Docker
+
+When running npm scripts inside the container, pass script arguments after `--` so npm does not parse them as npm options.
+
+```bash
+docker exec -it logarys-console-manager npm run user:create -- \
+  --name "Sébastien Kus" \
+  --email "seb@ktoi.fr" \
+  --password "password"
+```
+
+Create an admin user:
+
+```bash
+docker exec -it logarys-console-manager npm run user:create -- \
+  --name "Administrator" \
+  --email "admin@logarys.local" \
+  --password "change-me" \
+  --admin
+```
+
+Update a password:
+
+```bash
+docker exec -it logarys-console-manager npm run user:password -- \
+  --email "seb@ktoi.fr" \
+  --password "new-password"
+```
+
+The runtime Docker image includes the `scripts/` directory so these commands are available in `/app/scripts`.
