@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Put, Query } from "@nestjs/common";
 import { ConfigManagementService, PipelineConfig } from "./config-management.service.js";
 import { parsePositiveInteger } from "../common/http-error.js";
 
@@ -34,5 +34,15 @@ export class ConfigManagementController {
   @Post(["pipelines", "api/pipelines", "configs/pipelines", "api/configs/pipelines"])
   createPipeline(@Body() body: Omit<PipelineConfig, "_id" | "createdAt" | "updatedAt">) {
     return this.service.createPipeline(body);
+  }
+
+  @Put(["pipelines/:id", "api/pipelines/:id", "configs/pipelines/:id", "api/configs/pipelines/:id"])
+  updatePipeline(@Param("id") id: string, @Body() body: Partial<PipelineConfig>) {
+    return this.service.updatePipeline(id, body);
+  }
+
+  @Patch(["pipelines/:id", "api/pipelines/:id", "configs/pipelines/:id", "api/configs/pipelines/:id"])
+  patchPipeline(@Param("id") id: string, @Body() body: Partial<PipelineConfig>) {
+    return this.service.updatePipeline(id, body);
   }
 }

@@ -12,7 +12,7 @@
     "dev:up": "docker compose up -d --build",
     "dev:down": "docker compose down",
     "lint": "tsc -p tsconfig.build.json --noEmit",
-    "test:all": "npm run dev:up && npm run test:unit && npm run test:functional && npm run dev:down",
+    "test": "npm run dev:up && npm run test:unit && npm run test:functional && npm run dev:down",
     "test:unit": "npm run build && node --test test/*.spec.mjs",
     "test:functional": "node --test test/functional/*.functional-spec.mjs",
     "test:data": "node scripts/load-test-data.mjs"

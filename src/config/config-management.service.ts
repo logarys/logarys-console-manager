@@ -38,6 +38,30 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function buildPipelineLookupFilter(id: string): Filter<PipelineConfig> {
+  return ObjectId.isValid(id)
+    ? { $or: [{ _id: new ObjectId(id) }, { id }, { name: id }] }
+    : { $or: [{ id }, { name: id }] };
+}
+
+function cleanPipelineUpdate(input: Partial<PipelineConfig>): Partial<PipelineConfig> {
+  const update: Partial<PipelineConfig> = { ...input };
+
+  delete update._id;
+  delete update.createdAt;
+  delete update.updatedAt;
+
+  if (typeof update.name === "string") {
+    update.name = update.name.trim();
+  }
+
+  if (typeof update.id === "string") {
+    update.id = update.id.trim();
+  }
+
+  return update;
+}
+
 function parseBoolean(value: string | boolean | undefined): boolean | undefined {
   if (value === undefined || value === "") {
     return undefined;
@@ -115,12 +139,42 @@ export class ConfigManagementService {
     return { ...pipeline, _id: result.insertedId };
   }
 
-  async getPipeline(id: string): Promise<PipelineConfig> {
-    const filter = ObjectId.isValid(id)
-      ? { $or: [{ _id: new ObjectId(id) }, { id }, { name: id }] }
-      : { $or: [{ id }, { name: id }] };
+  async updatePipeline(id: string, input: Partial<PipelineConfig>): Promise<PipelineConfig> {
+    if (!id?.trim()) {
+      throw new BadRequestException("Pipeline id is required");
+    }
 
-    const pipeline = await this.mongo.collection<PipelineConfig>("pipelines").findOne(filter);
+    const update = cleanPipelineUpdate(input);
+
+    if (Object.keys(update).length === 0) {
+      throw new BadRequestException("No pipeline fields provided for update");
+    }
+
+    if (update.name !== undefined && !update.name.trim()) {
+      throw new BadRequestException("Pipeline name is required");
+    }
+
+    if (update.id !== undefined && !update.id.trim()) {
+      throw new BadRequestException("Pipeline id is required");
+    }
+
+    update.updatedAt = new Date();
+
+    const result = await this.mongo.collection<PipelineConfig>("pipelines").findOneAndUpdate(
+      buildPipelineLookupFilter(id),
+      { $set: update },
+      { returnDocument: "after" },
+    );
+
+    if (!result) {
+      throw new NotFoundException(`Pipeline not found: ${id}`);
+    }
+
+    return result;
+  }
+
+  async getPipeline(id: string): Promise<PipelineConfig> {
+    const pipeline = await this.mongo.collection<PipelineConfig>("pipelines").findOne(buildPipelineLookupFilter(id));
 
     if (!pipeline) {
       throw new NotFoundException(`Pipeline not found: ${id}`);
