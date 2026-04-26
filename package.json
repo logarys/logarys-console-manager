@@ -1,6 +1,6 @@
 {
   "name": "logarys-console-manager",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Logarys console API responsible for UI queries, query adapters, reports, configuration and maintenance operations.",
   "type": "module",
