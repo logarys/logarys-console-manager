@@ -53,6 +53,8 @@ services:
       NATS_URL: "nats://nats:4222"
 
       QUERY_ADAPTERS_DIR: "/var/lib/logarys/query-adapters"
+
+      LOGARYS_ENABLE_TEST_DATA_ENDPOINTS: true
     volumes:
       - query-adapters:/var/lib/logarys/query-adapters
     networks:

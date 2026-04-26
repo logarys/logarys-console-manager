@@ -73,7 +73,7 @@ test("QueryService keeps field validation errors as invalid query filters", () =
     () => service.convert("rsql", "mongodb", 'error=="critical"'),
     (error) => {
       const body = getBadRequestBody(error);
-      assert.equal(body.message, "Invalid RSQL syntax");
+      assert.equal(body.message, "Invalid query filter");
       assert.match(body.details, /Field is not allowed/);
       assert.ok(Array.isArray(body.allowedFields));
       return true;

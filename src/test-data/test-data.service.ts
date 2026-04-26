@@ -64,7 +64,9 @@ export class TestDataService {
         context: {
           index: index + 1,
           requestId: `test-${String(index + 1).padStart(3, "0")}`,
+          service: index % 2 === 0 ? "checkout" : "catalog",
           durationMs: 10 + index * 3,
+          userAgent: "logarys-console-manager-test-data/1.0",
         },
         raw: {
           generatedBy: "console-manager",

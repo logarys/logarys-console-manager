@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import type { QueryAdapterResult } from "@logarys/query-adapter-contracts";
 import { QueryAdapterRegistryService } from "../query-adapters/query-adapter-registry.service.js";
-import { DEFAULT_LOG_ALLOWED_FIELDS } from "./default-allowed-fields.js";
+import { buildLogAllowedFields, getLogAllowedFieldNames } from "./default-allowed-fields.js";
 
 function isRsqlSyntaxError(error: unknown): boolean {
   if (!(error instanceof Error)) {
@@ -33,10 +33,12 @@ export class QueryService {
     const adapter = this.registry.get(language, target);
 
     try {
+      const allowedFields = buildLogAllowedFields(query);
+
       return adapter.convert({
         query,
         options: {
-          allowedFields: DEFAULT_LOG_ALLOWED_FIELDS,
+          allowedFields,
           defaultLimit: 100,
           maxLimit: 1000,
         },
@@ -53,9 +55,9 @@ export class QueryService {
       }
 
       throw new BadRequestException({
-        message: "Invalid RSQL syntax",
+        message: "Invalid query filter",
         details,
-        allowedFields: Object.keys(DEFAULT_LOG_ALLOWED_FIELDS),
+        allowedFields: getLogAllowedFieldNames(query),
       });
     }
   }
