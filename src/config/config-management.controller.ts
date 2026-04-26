@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { AdminGuard } from "../auth/admin.guard.js";
 import { ConfigManagementService, PipelineConfig } from "./config-management.service.js";
 import { parsePositiveInteger } from "../common/http-error.js";
 
 @Controller()
+@UseGuards(AdminGuard)
 export class ConfigManagementController {
   constructor(private readonly service: ConfigManagementService) {}
 

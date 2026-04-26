@@ -55,6 +55,14 @@ services:
       QUERY_ADAPTERS_DIR: "/var/lib/logarys/query-adapters"
 
       LOGARYS_ENABLE_TEST_DATA_ENDPOINTS: true
+
+      JWT_SECRET: "change-this-secret"
+      JWT_EXPIRES_IN_SECONDS: "43200"
+
+      ADMIN_INIT_ENABLED: "true"
+      ADMIN_EMAIL: "admin@logarys.local"
+      ADMIN_PASSWORD: "change-me-password"
+      ADMIN_NAME: "Administrator"
     volumes:
       - query-adapters:/var/lib/logarys/query-adapters
     networks:

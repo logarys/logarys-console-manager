@@ -15,7 +15,9 @@
     "test": "npm run dev:up && npm run test:unit && npm run test:functional && npm run dev:down",
     "test:unit": "npm run build && node --test test/*.spec.mjs",
     "test:functional": "node --test test/functional/*.functional-spec.mjs",
-    "test:data": "node scripts/load-test-data.mjs"
+    "test:data": "node scripts/load-test-data.mjs",
+    "user:create": "node scripts/users.mjs create",
+    "user:password": "node scripts/users.mjs password"
   },
   "dependencies": {
     "@logarys/query-adapter-contracts": "^0.1.0",

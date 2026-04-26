@@ -4,6 +4,8 @@
 
 It is responsible for UI-oriented requests:
 
+- authenticating console users with JWT bearer tokens;
+- managing console users in MongoDB;
 - searching logs with a query language such as RSQL;
 - converting external query languages to MongoDB queries through adapters;
 - exposing dashboard reports;
@@ -27,6 +29,7 @@ UI / frontend
   v
 logarys-console-manager
   |
+  +--> Auth / users in MongoDB
   +--> Query adapters
   +--> MongoDB logs
   +--> MongoDB configs
@@ -75,6 +78,256 @@ MONGODB_DATABASE=logarys
 NATS_URL=nats://localhost:4222
 QUERY_ADAPTERS_DIR=/var/lib/logarys/query-adapters
 QUERY_ADAPTER_ALLOWED_GIT_PREFIXES=https://github.com/logarys/,https://gitlab.com/logarys/
+
+# Disabled by default. Enable only in local/dev environments.
+LOGARYS_ENABLE_TEST_DATA_ENDPOINTS=false
+
+# Authentication
+JWT_SECRET=change-this-secret
+JWT_EXPIRES_IN_SECONDS=43200
+
+# Optional first admin initialization. Never auto-overwrites an existing admin.
+ADMIN_INIT_ENABLED=false
+ADMIN_EMAIL=admin@logarys.local
+ADMIN_PASSWORD=change-me-password
+ADMIN_NAME=Administrator
+```
+
+### First admin initialization
+
+The application can create the first administrator automatically at startup.
+
+Enable it only when bootstrapping an environment:
+
+```env
+ADMIN_INIT_ENABLED=true
+ADMIN_EMAIL=admin@logarys.local
+ADMIN_PASSWORD=change-me-password
+ADMIN_NAME=Administrator
+```
+
+Startup behavior:
+
+```txt
+If ADMIN_INIT_ENABLED is not true:
+  do nothing
+
+If ADMIN_INIT_ENABLED is true and no admin exists:
+  create the first admin user
+
+If an admin already exists:
+  do nothing
+```
+
+The initializer never overwrites an existing admin password.
+
+## Authentication
+
+Most routes are protected by JWT bearer authentication.
+
+Login:
+
+```http
+POST /auth/login
+Content-Type: application/json
+```
+
+```json
+{
+  "email": "admin@logarys.local",
+  "password": "change-me-password"
+}
+```
+
+Example response:
+
+```json
+{
+  "accessToken": "jwt-token",
+  "expiresIn": 43200,
+  "user": {
+    "id": "user-id",
+    "name": "Administrator",
+    "email": "admin@logarys.local",
+    "isAdmin": true,
+    "isEnabled": true
+  }
+}
+```
+
+Use the token on protected routes:
+
+```http
+Authorization: Bearer jwt-token
+```
+
+## Permissions
+
+| Action | Admin | Regular user |
+|---|---:|---:|
+| Login | yes | yes |
+| Search logs | yes | yes |
+| Convert/search query | yes | yes |
+| Add/rebuild index | yes | yes |
+| Read own profile | yes | yes |
+| Update own name/email/password | yes | yes |
+| List users | yes | no |
+| Create users | yes | no |
+| Update another user | yes | no |
+| Disable users | yes | no |
+| Manage pipelines | yes | no |
+| Manage query adapters | yes | no |
+| Run admin maintenance commands | yes | no |
+| Load test data endpoint | yes | no |
+
+Disabled users cannot log in, and existing tokens from disabled users are rejected.
+
+## User management API
+
+### List users
+
+Admin only.
+
+```http
+GET /users
+Authorization: Bearer jwt-token
+```
+
+### Create user
+
+Admin only.
+
+```http
+POST /users
+Authorization: Bearer jwt-token
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "change-me-password",
+  "isAdmin": false,
+  "isEnabled": true
+}
+```
+
+### Update user
+
+Admin only.
+
+```http
+PATCH /users/:id
+Authorization: Bearer jwt-token
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "new-password",
+  "isAdmin": false,
+  "isEnabled": true
+}
+```
+
+All fields are optional.
+
+### Disable user
+
+Admin only.
+
+```http
+PATCH /users/:id/disable
+Authorization: Bearer jwt-token
+```
+
+### Delete user
+
+Admin only.
+
+```http
+DELETE /users/:id
+Authorization: Bearer jwt-token
+```
+
+### Read own profile
+
+Authenticated users.
+
+```http
+GET /users/me
+Authorization: Bearer jwt-token
+```
+
+### Update own profile
+
+Authenticated users.
+
+Regular users can only update their own `name`, `email`, and `password`.
+
+```http
+PATCH /users/me
+Authorization: Bearer jwt-token
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "new-password"
+}
+```
+
+## Console user commands
+
+The project includes console commands for user administration.
+
+### Create an admin user
+
+```bash
+npm run user:create -- \
+  --name "Administrator" \
+  --email admin@logarys.local \
+  --password "change-me-password" \
+  --admin
+```
+
+### Create a regular user
+
+```bash
+npm run user:create -- \
+  --name "John Doe" \
+  --email john@example.com \
+  --password "change-me-password"
+```
+
+### Create a disabled user
+
+```bash
+npm run user:create -- \
+  --name "John Doe" \
+  --email john@example.com \
+  --password "change-me-password" \
+  --disabled
+```
+
+### Update a user password
+
+```bash
+npm run user:password -- \
+  --email john@example.com \
+  --password "new-password"
+```
+
+The commands use the same MongoDB environment variables as the API:
+
+```env
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DATABASE=logarys
 ```
 
 ## Development
@@ -95,27 +348,17 @@ npm run build
 npm test
 ```
 
-# Functional Tests
+## Functional tests
 
-Copy the `test/functional` directory into `logarys-console-manager`.
+Functional tests are stored in `test/functional`.
 
-Add this script to `package.json`:
-
-```json
-{
-  "scripts": {
-    "test:functional": "node --test test/functional/*.functional-spec.mjs"
-  }
-}
-```
-
-Start the dev stack:
+Run the dev stack:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+npm run dev:up
 ```
 
-Run tests:
+Run functional tests:
 
 ```bash
 npm run test:functional
@@ -126,6 +369,20 @@ Use another API URL:
 ```bash
 LOGARYS_CONSOLE_URL=http://localhost:3000 npm run test:functional
 ```
+
+The functional HTTP helper logs in as an admin user by default so existing protected-route tests can call the API normally.
+
+Auth-specific tests can opt out of authentication or use a regular user.
+
+The suite includes coverage for:
+
+- login success and failure;
+- missing bearer token rejection;
+- disabled user login rejection;
+- admin user CRUD;
+- regular user denial on admin-only routes;
+- regular user profile update;
+- regular user access to search/query/reindex routes.
 
 ## Query adapters
 
@@ -156,8 +413,11 @@ At startup, this package registers the default RSQL to MongoDB adapter:
 
 ## List installed adapters
 
+Admin only.
+
 ```http
 GET /query-adapters
+Authorization: Bearer jwt-token
 ```
 
 Example response:
@@ -175,8 +435,11 @@ Example response:
 
 ## Load an installed npm package
 
+Admin only.
+
 ```http
 POST /query-adapters/load
+Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
@@ -188,8 +451,11 @@ Content-Type: application/json
 
 ## Install an adapter from Git
 
+Admin only.
+
 ```http
 POST /query-adapters/install
+Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
@@ -213,8 +479,11 @@ For security, only Git URLs matching `QUERY_ADAPTER_ALLOWED_GIT_PREFIXES` are ac
 
 ## Convert a query
 
+Authenticated users.
+
 ```http
 POST /query/convert
+Authorization: Bearer jwt-token
 Content-Type: application/json
 ```
 
@@ -242,166 +511,3 @@ Example response:
   }
 }
 ```
-
-## Search logs
-
-```http
-GET /logs?filter=level==error;host==api-01&limit=100
-```
-
-The `filter` parameter is converted through the selected query adapter.
-
-Default language:
-
-```txt
-rsql
-```
-
-Default target:
-
-```txt
-mongodb
-```
-
-## Reports
-
-### Errors by type
-
-```http
-GET /reports/errors/by-type?filter=source==nginx&from=2026-04-25T00:00:00Z&to=2026-04-25T23:59:59Z
-```
-
-### Errors by host
-
-```http
-GET /reports/errors/by-host?filter=source==nginx
-```
-
-### Errors by source
-
-```http
-GET /reports/errors/by-source
-```
-
-### Error progression
-
-```http
-GET /reports/errors/progression?groupBy=hour&from=2026-04-25T00:00:00Z&to=2026-04-25T23:59:59Z
-```
-
-Supported values for `groupBy`:
-
-```txt
-hour
-day
-```
-
-## Configuration endpoints
-
-### List pipelines
-
-```http
-GET /configs/pipelines
-```
-
-### Create pipeline
-
-```http
-POST /configs/pipelines
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "nginx-pipeline",
-  "enabled": true,
-  "source": "nginx",
-  "parser": "nginx-access",
-  "rules": []
-}
-```
-
-## Maintenance commands
-
-Maintenance commands are published to NATS on:
-
-```txt
-logarys.maintenance.commands
-```
-
-### Reload pipelines
-
-```http
-POST /maintenance/reload-pipelines
-```
-
-### Reindex
-
-```http
-POST /maintenance/reindex
-```
-
-### Rotate
-
-```http
-POST /maintenance/rotate
-```
-
-## Security notes
-
-Dynamic adapter installation is powerful and dangerous.
-
-Recommended production safeguards:
-
-- restrict adapter installation to administrators;
-- whitelist Git domains;
-- execute adapters in an isolated runner process;
-- store installed adapter metadata in MongoDB;
-- add adapter signatures or trusted hashes;
-- add timeouts to installation and conversion;
-- never expose MongoDB query objects directly to untrusted clients;
-- always use field whitelists.
-
-## License
-
-MIT
-
-## UI compatible routes
-
-The console manager exposes UI-friendly aliases for pipelines and logs:
-
-```http
-GET  /pipelines
-POST /pipelines
-GET  /pipelines/:id
-GET  /logs
-POST /logs/search
-```
-
-The historical config routes remain available:
-
-```http
-GET  /configs/pipelines
-POST /configs/pipelines
-GET  /configs/pipelines/:id
-```
-
-Pipeline search accepts `query`, `q`, `name`, `inputType`, `enabled`, `limit`, and `skip`.
-
-Log search accepts `filter` for RSQL, plus UI parameters `query`, `q`, `search`, `pipelineId`, `level`, `limit`, and `skip`.
-
-## Local test data endpoint
-
-For local development only, you can enable a gated test data endpoint:
-
-```env
-LOGARYS_ENABLE_TEST_DATA_ENDPOINTS=true
-```
-
-Then load one pipeline and synthetic logs through the console-manager API:
-
-```bash
-LOGARYS_CONSOLE_API_URL=http://localhost:3002 npm run test:data
-```
-
-The endpoint is disabled by default and should not be enabled in production.

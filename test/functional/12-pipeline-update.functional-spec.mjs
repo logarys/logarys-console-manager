@@ -1,42 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { get, post, assertOk } from "./http-client.mjs";
-
-async function put(path, body) {
-  const response = await fetch(`${process.env.LOGARYS_CONSOLE_URL ?? "http://localhost:3000"}${path}`, {
-    method: "PUT",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  return parseResponse(response);
-}
-
-async function patch(path, body) {
-  const response = await fetch(`${process.env.LOGARYS_CONSOLE_URL ?? "http://localhost:3000"}${path}`, {
-    method: "PATCH",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  return parseResponse(response);
-}
-
-async function parseResponse(response) {
-  const contentType = response.headers.get("content-type") ?? "";
-
-  return {
-    status: response.status,
-    ok: response.ok,
-    body: contentType.includes("application/json") ? await response.json() : await response.text(),
-  };
-}
+import { get, post, put, patch, assertOk } from "./http-client.mjs";
 
 function createPipelinePayload(prefix = "functional-update-pipeline") {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

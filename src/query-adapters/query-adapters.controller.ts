@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { AdminGuard } from "../auth/admin.guard.js";
 import { QueryAdapterRegistryService } from "./query-adapter-registry.service.js";
 import { QueryAdapterInstallerService } from "./query-adapter-installer.service.js";
 import { QueryAdapterLoaderService } from "./query-adapter-loader.service.js";
 
 @Controller("query-adapters")
+@UseGuards(AdminGuard)
 export class QueryAdaptersController {
   constructor(
     private readonly registry: QueryAdapterRegistryService,

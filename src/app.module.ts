@@ -9,11 +9,15 @@ import { MaintenanceModule } from "./maintenance/maintenance.module.js";
 import { MongoModule } from "./mongo/mongo.module.js";
 import { NatsModule } from "./nats/nats.module.js";
 import { TestDataModule } from "./test-data/test-data.module.js";
+import { AuthModule } from "./auth/auth.module.js";
+import { UsersModule } from "./users/users.module.js";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongoModule,
+    UsersModule,
+    AuthModule,
     NatsModule,
     QueryAdaptersModule,
     QueryModule,
