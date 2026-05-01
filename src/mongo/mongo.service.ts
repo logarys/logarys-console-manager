@@ -1,5 +1,5 @@
 import { Injectable, OnApplicationShutdown, OnModuleInit } from "@nestjs/common";
-import { Collection, Db, Document, MongoClient } from "mongodb";
+import { Collection, Db, Document, Filter, MongoClient } from "mongodb";
 
 @Injectable()
 export class MongoService implements OnModuleInit, OnApplicationShutdown {
@@ -20,6 +20,12 @@ export class MongoService implements OnModuleInit, OnApplicationShutdown {
     name: string,
   ): Collection<TSchema> {
     return this.db.collection<TSchema>(name);
+  }
+
+  async listCollectionNames(filter: Filter<Document> = {}): Promise<string[]> {
+    const collections = await this.db.listCollections(filter, { nameOnly: true }).toArray();
+
+    return collections.map((collection) => collection.name);
   }
 
   async onApplicationShutdown(): Promise<void> {
